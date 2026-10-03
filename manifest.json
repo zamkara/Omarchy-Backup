@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "zam.backup",
+  "name": "Backup & Restore",
+  "version": "1.0.0",
+  "author": "zamkara",
+  "description": "Selective backups and restores with checksums, cancellation, live logs and a portable restore script.",
+  "license": "LicenseRef-Almatera-Incubator",
+  "kinds": [
+    "overlay"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "overlay": "Backup.qml"
+  }
+}

@@ -60,6 +60,29 @@ class MenuIntegrationTests(unittest.TestCase):
    data=json.loads(path.read_text());self.assertEqual(data['custom.item']['action'],'echo x,}');self.assertIn('when',data['setup.backup'])
    self.assertEqual(len(list(path.parent.glob('*.before-backup-*'))),1)
 
+class MenuConsentTests(unittest.TestCase):
+ def test_first_load_is_read_only_and_skip_preserves_config(self):
+  from unittest.mock import patch
+  engine=load('menu.py')
+  with tempfile.TemporaryDirectory() as tmp:
+   home=pathlib.Path(tmp);config=home/'.config/omarchy/extensions/omarchy-menu.jsonc'
+   with patch.object(pathlib.Path,'home',return_value=home):
+    with patch.object(sys,'argv',['menu.py','--status']),patch('builtins.print') as output:
+     engine.main();self.assertTrue(json.loads(output.call_args.args[0])['prompt'])
+    self.assertFalse(config.exists());self.assertFalse((home/'.local/state').exists())
+    with patch.object(sys,'argv',['menu.py','--decline']):engine.main()
+    self.assertFalse(config.exists())
+    with patch.object(sys,'argv',['menu.py','--status']),patch('builtins.print') as output:
+     engine.main();self.assertFalse(json.loads(output.call_args.args[0])['prompt'])
+ def test_existing_unrelated_menu_entry_is_never_overwritten(self):
+  from unittest.mock import patch
+  engine=load('menu.py')
+  with tempfile.TemporaryDirectory() as tmp:
+   home=pathlib.Path(tmp);config=home/'.config/omarchy/extensions/omarchy-menu.jsonc';config.parent.mkdir(parents=True);config.write_text('{"setup.backup":{"action":"other-tool"}}');original=config.read_bytes()
+   with patch.object(pathlib.Path,'home',return_value=home),patch.object(sys,'argv',['menu.py','--install']):
+    with self.assertRaises(SystemExit):engine.main()
+   self.assertEqual(config.read_bytes(),original)
+
 class FreshSystemTests(unittest.TestCase):
  setUp=SafetyTests.setUp
  tearDown=SafetyTests.tearDown

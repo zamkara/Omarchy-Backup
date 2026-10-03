@@ -10,7 +10,7 @@ Requires Omarchy Quattro, Python 3.12 or newer, Bash, and `wl-copy` for copying 
 omarchy plugin add https://github.com/zamkara/Omarchy-Backup.git --enable
 ```
 
-The enabled plugin automatically adds **Setup → Backup & Restore**. No installer script, manual configuration or extra command is required. This preserves existing menu entries and backs up the menu before its first change. Repeated loads leave it unchanged.
+On first enable, a native dialog asks whether to add **Setup → Backup & Restore**. **Add to Setup** grants permission to update your menu; **Skip** leaves user configuration unchanged. No extra command or installer is needed. Existing entries are preserved, the menu is backed up before modification, and repeated loads leave it unchanged.
 
 To open from a terminal:
 
@@ -60,7 +60,7 @@ The selectable sections include desktop, terminals, editors, fonts/themes, local
 
 This is a user-data backup, not a disk image. System mount configuration is reference-only and is never installed. Services are not automatically enabled. Clipboard history, migration markers, `node_modules`, Python bytecode and known backup artifacts are excluded. Symlinks are stored without following external targets. Project Git history is included.
 
-Removal hides the Setup entry automatically and never deletes backups, logs, restored files or rollback copies:
+If you accepted Setup integration, removal hides the Setup entry automatically and never deletes backups, logs, restored files or rollback copies:
 
 ```sh
 omarchy plugin remove zam.backup
@@ -80,3 +80,7 @@ python3 -m unittest discover -s tests -v
 Publishing checklist and submission instructions: https://plugins.omarchy.org/publish.html
 
 License: Almatera Incubator License, see LICENSE. This plugin uses Omarchy's installed UI components rather than copying their source.
+
+## Submission checklist
+
+Installation, removal, dependencies and license are documented above. User configuration is changed only after explicit Add to Setup or Confirm Restore actions. Backup and restore never run automatically on install. The repository includes no preview assets. Marketplace listing approval is not a security review. See PUBLISHING.md for maintainer notes and remaining test limits.

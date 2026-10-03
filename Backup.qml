@@ -11,6 +11,7 @@ Item {
  function toolPath(name) { return decodeURIComponent(Qt.resolvedUrl("scripts/" + name).toString().replace(/^file:\/\//, "")) }
  property bool refreshRequested: false
  function refreshSystem() { if (busy || phase !== "restored" || refreshRequested) return; refreshRequested = true; Quickshell.execDetached(["python3", root.toolPath("refresh.py"), "--pending", pendingDesktop, "--log-file", logPath]); }
+ property bool menuConsent: false
  property bool opened: false
  property string destination: Quickshell.env("HOME") + "/Downloads"
  property string resultPath: ""
@@ -100,11 +101,18 @@ Item {
   worker.running = true
  }
  IpcHandler { target: "backup"; function browse(restore: bool): string { root.opened = true; root.browseFolder(restore); return "ok" } function preview(path: string): string { root.opened = true; root.checkBackup(path); return "ok" } function status(): string { return JSON.stringify({busy: root.busy, phase: root.phase, picker: root.pickerOpen, folders: folders.count, message: root.message, result: root.resultPath}) } }
- // Setup integration is idempotent and runs only while this enabled plugin is loaded.
+ // Read-only first-run check. Configuration changes require the user's click.
+ Process {
+  id: menuStatus
+  command: ["python3", root.toolPath("menu.py"), "--status"]
+  running: true
+  stdout: StdioCollector { onStreamFinished: { try { var state = JSON.parse(text); root.menuConsent = state.prompt; if (root.menuConsent) root.opened = true } catch (error) { root.pendingLog += "Menu setup check failed: " + error + "\n" } } }
+  stderr: StdioCollector { onStreamFinished: { if (text) root.pendingLog += text } }
+ }
+ // Only explicit Add to Setup / Skip actions run this helper.
  Process {
   id: menuIntegration
-  command: ["python3", root.toolPath("menu.py"), "--install"]
-  running: true
+  onExited: function(code, status) { if (code === 0) root.menuConsent = false; else root.message = "Menu setup failed · see log" }
   stderr: StdioCollector { onStreamFinished: { if (text) root.pendingLog += text } }
  }
  FolderListModel { id: folders; folder: "file://" + root.pickerPath; showFiles: false; showDotAndDotDot: false; showHidden: false; sortField: FolderListModel.Name }
@@ -141,7 +149,27 @@ Item {
   WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
   MouseArea { anchors.fill: parent; onClicked: root.close() }
   Rectangle {
-   visible: !root.previewOpen && !root.pickerOpen
+   visible: root.menuConsent
+   width: Math.min(820,parent.width - 60); height: consentContent.implicitHeight + 44
+   anchors.centerIn: parent; color: Color.menu.background; border.color: Color.menu.border; radius: Style.cornerRadius
+   MouseArea { anchors.fill: parent }
+   ColumnLayout {
+    id: consentContent
+    anchors { left: parent.left; right: parent.right; top: parent.top; margins: 22 }
+    spacing: 12
+    Text { text: "Add Backup & Restore to Setup?"; color: Color.menu.text; font.family: Style.font.menuFamily; font.pixelSize: Style.font.display }
+    Text { text: "With your permission, the plugin adds one entry to your Omarchy Setup menu. Existing entries are preserved and the menu file is backed up first. Choosing Skip leaves your configuration unchanged."; color: Color.menu.text; font.family: Style.font.menuFamily; font.pixelSize: Style.font.heading; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+    Text { text: "~/.config/omarchy/extensions/omarchy-menu.jsonc"; color: Color.menu.text; font.family: Style.font.family; font.pixelSize: Style.font.body + 2; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere }
+    Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Color.menu.border }
+    RowLayout {
+     Layout.fillWidth: true; spacing: 12
+     SoundUi.Button { Layout.fillWidth: true; Layout.preferredWidth: 1; bordered: true; text: "Add to Setup"; iconText: "󰄬"; fontFamily: Style.font.menuFamily; fontSize: Style.font.heading + 1; enabled: !menuIntegration.running; onClicked: { menuIntegration.command = ["python3",root.toolPath("menu.py"),"--install"]; menuIntegration.running = true } }
+     SoundUi.Button { Layout.fillWidth: true; Layout.preferredWidth: 1; bordered: true; text: "Skip"; iconText: "󰅖"; fontFamily: Style.font.menuFamily; fontSize: Style.font.heading + 1; enabled: !menuIntegration.running; onClicked: { menuIntegration.command = ["python3",root.toolPath("menu.py"),"--decline"]; menuIntegration.running = true } }
+    }
+   }
+  }
+  Rectangle {
+   visible: !root.previewOpen && !root.pickerOpen && !root.menuConsent
    width: Math.min(820, parent.width - 60)
    height: content.implicitHeight + 44
    anchors.centerIn: parent

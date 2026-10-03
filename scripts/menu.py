@@ -8,9 +8,16 @@ def jsonc(text):
  text=re.sub(r'("(?:\\.|[^"\\])*")|,(?=\s*[}\]])',lambda match:match.group(1) or '',text)
  return json.loads(text)
 def main():
- parser=argparse.ArgumentParser();group=parser.add_mutually_exclusive_group(required=True);group.add_argument('--install',action='store_true');group.add_argument('--remove',action='store_true');args=parser.parse_args()
+ parser=argparse.ArgumentParser();group=parser.add_mutually_exclusive_group(required=True);group.add_argument('--install',action='store_true');group.add_argument('--remove',action='store_true');group.add_argument('--status',action='store_true');group.add_argument('--decline',action='store_true');args=parser.parse_args()
  path=pathlib.Path.home()/'.config/omarchy/extensions/omarchy-menu.jsonc'
+ state=pathlib.Path.home()/'.local/state/omarchy/backup/menu-consent.json'
+ if args.decline:
+  state.parent.mkdir(parents=True,exist_ok=True,mode=0o700);state.write_text(json.dumps({'declined':True}));state.chmod(0o600);return
  data=jsonc(path.read_text()) if path.exists() else {}
+ if args.status:
+  owned=data.get('setup.backup',{}).get('action')==ENTRY['action']
+  declined=state.exists() and json.loads(state.read_text()).get('declined',False)
+  print(json.dumps({'installed':owned,'prompt':not owned and not declined and 'setup.backup' not in data}));return
  if args.install:
   if 'setup.backup' in data and data['setup.backup'].get('action')!=ENTRY['action']:raise SystemExit('Setup backup entry belongs to another tool; left unchanged.')
   existing=data.get('setup.backup',{})

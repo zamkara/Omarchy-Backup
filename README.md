@@ -2,6 +2,9 @@
 
 A native Omarchy Quattro overlay for selective user backups and restores. Choose sections, inspect a verified backup, restore selected sections, and review the live log before refreshing the desktop.
 
+<img width="1920" height="1080" alt="screenshot-2026-10-04_02-41-43" src="https://github.com/user-attachments/assets/0ab97e63-ee9e-4b5f-8ad0-e16185d58724" />
+
+
 ## Install
 
 Requires Omarchy Quattro, Python 3.12 or newer, Bash, and `wl-copy` for copying logs. The plugin uses Omarchy's existing Quickshell, theme, fonts and controls. No pip packages, root access, custom sound plugin, Foot, or private scripts are needed. This requires the Quattro shell with the official `qs.Ui` and `qs.Commons` APIs; older Omarchy releases without the plugin system are not supported.
@@ -19,6 +22,9 @@ omarchy-shell shell summon zam.backup
 ```
 
 ## Use
+
+<img width="1920" height="1080" alt="screenshot-2026-10-04_02-42-26" src="https://github.com/user-attachments/assets/68dcbfe5-7d4e-4aeb-99f1-f9dff10391d4" />
+
 
 - Browse to the destination, choose sections and create a backup.
 - Each backup is saved directly under the chosen destination as `omarchy-backup-YYYY-MM-DD_HH-MM-SS`.
@@ -45,6 +51,9 @@ bash restore.sh --restore --sections desktop,terminals
 bash restore.sh --extract /path/to/empty-folder --sections git
 bash restore.sh --install-packages
 ```
+
+<img width="1920" height="1080" alt="screenshot-2026-10-04_02-41-58" src="https://github.com/user-attachments/assets/c9c0931d-ce01-4d54-88b0-a2670cc53f52" />
+
 
 Desktop changes restored into an active home are staged under `~/.local/state/omarchy/restore-pending/`. To apply from a terminal, use the pending path printed in the restore log:
 
